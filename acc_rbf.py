@@ -1,46 +1,38 @@
-# For the enclosed dataset, use linear SVM and find the accuracy.
+# For the enclosed dataset, use  SVM with RBF and print the accuracy (10).
 import pandas as pd
 import numpy as np
-from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
 
 
-# Import Data file
-dataset = pd.read_csv('bc.csv')
- 
+# Importing Data file
+
+df = pd.read_csv("bc.csv")
+
 #replace special character with median
-l = []
-for i in dataset['Bare Nuclei']:
-  if i.isnumeric():
-    l.append(i)
-med = pd.DataFrame(l).median()
-med[0]
 
-dataset['Bare Nuclei'] = dataset['Bare Nuclei'].str.replace('?',str(int(med[0])))
+df['Bare Nuclei']=df['Bare Nuclei'].replace("?",0)
+df['Bare Nuclei']=df['Bare Nuclei'].replace(0,df['Bare Nuclei'].median())
+# converting the object column  to float
 
+df['Bare Nuclei']=pd.to_numeric(df['Bare Nuclei'])
 
-# converting the object column of 'Bare Nuclei'  to float 64
+#split the data with 80 20 and random state as 10
+x = df.drop('Class',axis = 1)
+y=df['Class']
 
-dataset['Bare Nuclei'] = dataset['Bare Nuclei'].astype(float)
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=10)
+s = StandardScaler()
+x_train = s.fit_transform(x_train)
+x_test = s.transform(x_test)
 
-# print(dataset)
+from sklearn.svm import SVC
+obj = SVC(kernel="rbf",random_state = 0)
+obj.fit(x_train,y_train)
 
+y_pred = obj.predict(x_test)
 
-# Take the target as "Class"
-X = dataset.drop('Class', axis=1)
-acc1 = 0.96
-y = dataset['Class']
-
-#split the data with 80 20 ratio and random state as 10
-
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.20, train_size = 0.80, random_state=10)
-
-# Build a Support Vector Machine on train data with linear kernel 
-
-svc = SVC(kernel='rbf', probability=True)
-svc.fit(X_train, y_train)
-y_pred = svc.predict(X_test)
-#print accuracy score when kernel is linear and round off to 0
-acc = accuracy_score(y_test,y_pred)
-print(round(acc1*100,0))
+acc = accuracy_score(y_test,y_pred)*100
+print(round(acc,0))
